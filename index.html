@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>App MVC</title>
+  <style>
+    /* === VIEW: style.css === */
+    body { font-family: Arial, sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 40px 16px; }
+    #app { background: white; border-radius: 12px; padding: 30px; width: 100%; max-width: 480px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h1 { color: #333; margin-bottom: 20px; }
+    .input-area { display: flex; gap: 8px; margin-bottom: 20px; }
+    input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+    input:focus { border-color: #4CAF50; outline: none; }
+    button { padding: 10px 16px; background: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; }
+    ul { list-style: none; padding: 0; }
+    li { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 12px; margin-bottom: 8px; }
+    .done { text-decoration: line-through; color: #aaa; }
+    .btn-delete { background: #e53935; }
+    .empty { color: #aaa; text-align: center; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    // === MODEL: models/task.js ===
+    class TaskModel {
+      constructor() { this.tasks = []; }
+      addTask(name) { this.tasks.push({ id: Date.now(), name: name, done: false }); }
+      deleteTask(id) { this.tasks = this.tasks.filter(function(t) { return t.id !== id; }); }
+      toggleTask(id) { var t = this.tasks.find(function(t) { return t.id === id; }); if(t) t.done = !t.done; }
+      getTasks() { return this.tasks; }
+    }
+
+    // === VIEW: views/taskView.js ===
+    class TaskView {
+      constructor() {
+        document.getElementById("app").innerHTML = `
+          <h1>Lista de Tareas</h1>
+          <div class="input-area">
+            <input id="input" type="text" placeholder="Escribe una tarea..." />
+            <button id="btnAdd">Agregar</button>
+          </div>
+          <ul id="list"></ul>
+        `;
+        this.input  = document.getElementById("input");
+        this.btnAdd = document.getElementById("btnAdd");
+        this.list   = document.getElementById("list");
+      }
+      render(tasks) {
+        this.list.innerHTML = "";
+        if (tasks.length === 0) { this.list.innerHTML = "<p class='empty'>No hay tareas aún.</p>"; return; }
+        tasks.forEach(function(task) {
+          var li = document.createElement("li");
+          li.innerHTML = '<span class="' + (task.done ? "done" : "") + '">' + task.name + '</span>' +
+            '<div><button onclick="controller.toggle(' + task.id + ')">✔️</button>' +
+            '<button class="btn-delete" onclick="controller.remove(' + task.id + ')">🗑️</button></div>';
+          document.getElementById("list").appendChild(li);
+        });
+      }
+      getInput()   { return this.input.value.trim(); }
+      clearInput() { this.input.value = ""; }
+    }
+
+    // === CONTROLLER: controllers/taskController.js ===
+    class TaskController {
+      constructor(model, view) {
+        this.model = model;
+        this.view  = view;
+        this.view.btnAdd.addEventListener("click", function() { controller.add(); });
+        this.view.input.addEventListener("keypress", function(e) { if(e.key === "Enter") controller.add(); });
+        this.refresh();
+      }
+      add()      { var n = this.view.getInput(); if(n === "") return; this.model.addTask(n); this.view.clearInput(); this.refresh(); }
+      remove(id) { this.model.deleteTask(id); this.refresh(); }
+      toggle(id) { this.model.toggleTask(id); this.refresh(); }
+      refresh()  { this.view.render(this.model.getTasks()); }
+    }
+
+    // === APP: app.js ===
+    var controller = new TaskController(new TaskModel(), new TaskView());
+  </script>
+</body>
+</html>
+  </script>
+</body>
+</html>
